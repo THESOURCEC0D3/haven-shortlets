@@ -241,6 +241,49 @@ export const getApartmentBySlug = (slug: string): Apartment | undefined => {
   return apartments.find((a) => a.slug === slug);
 };
 
+// --- Programmatic-SEO helpers ---------------------------------------------
+// Property "type" is derived from bedroom count so we can build long-tail
+// landing pages like /port-harcourt/gra/2-bedroom without adding a new field.
+
+export type AreaSlug = Apartment["area"];
+
+/** URL-safe type slug for an apartment, e.g. "2-bedroom". */
+export const typeSlugFor = (apartment: Apartment): string =>
+  `${apartment.bedrooms}-bedroom`;
+
+/** Human label for a type slug, e.g. "2-bedroom" -> "2-Bedroom". */
+export const typeLabelFor = (typeSlug: string): string => {
+  const n = parseInt(typeSlug, 10);
+  return `${n}-Bedroom`;
+};
+
+export const getApartmentsByArea = (area: string): Apartment[] =>
+  apartments.filter((a) => a.area === area);
+
+export const getApartmentsByAreaAndType = (
+  area: string,
+  typeSlug: string,
+): Apartment[] =>
+  apartments.filter((a) => a.area === area && typeSlugFor(a) === typeSlug);
+
+/**
+ * Every (area, type) pair that actually has at least one listing. Used by
+ * generateStaticParams so we never publish thin/empty landing pages — empty
+ * pages are an SEO liability, not an asset.
+ */
+export const getAreaTypeCombos = (): { area: string; type: string }[] => {
+  const seen = new Set<string>();
+  const combos: { area: string; type: string }[] = [];
+  for (const a of apartments) {
+    const key = `${a.area}/${typeSlugFor(a)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      combos.push({ area: a.area, type: typeSlugFor(a) });
+    }
+  }
+  return combos;
+};
+
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",

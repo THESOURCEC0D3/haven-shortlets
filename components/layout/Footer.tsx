@@ -9,13 +9,16 @@ const quickLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-const apartments = [
-  { label: "Executive Suite — GRA", href: "/apartments/executive-suite-gra" },
-  { label: "Deluxe Studio — GRA", href: "/apartments/deluxe-studio-gra" },
-  { label: "Premium 2-Bedroom — Woji", href: "/apartments/premium-2bed-woji" },
-  { label: "Classic 1-Bedroom — Woji", href: "/apartments/classic-1bed-woji" },
-  { label: "Corporate Suite — GRA", href: "/apartments/corporate-suite-gra" },
-  { label: "Cozy Studio — Woji", href: "/apartments/cozy-studio-woji" },
+// Location + guide links instead of one link per apartment. These point crawlers
+// (and users) at the programmatic landing pages and content that target the
+// high-intent local searches — and they spread internal link equity to them.
+const exploreLinks = [
+  { label: "Short-lets in Port Harcourt", href: "/port-harcourt" },
+  { label: "Short-lets in GRA", href: "/port-harcourt/gra" },
+  { label: "Short-lets in Woji", href: "/port-harcourt/woji" },
+  { label: "GRA neighbourhood guide", href: "/guides/gra-neighbourhood-guide" },
+  { label: "Woji neighbourhood guide", href: "/guides/woji-neighbourhood-guide" },
+  { label: "Diaspora booking guide", href: "/guides/diaspora-short-let-guide" },
 ];
 
 export default function Footer() {
@@ -75,19 +78,19 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3 — Apartments */}
+          {/* Column 3 — Explore by location + guides */}
           <div>
             <h3 className="font-semibold text-white text-sm uppercase tracking-wider mb-4">
-              Our Apartments
+              Explore
             </h3>
             <ul className="flex flex-col gap-3">
-              {apartments.map((apt) => (
-                <li key={apt.href}>
+              {exploreLinks.map((link) => (
+                <li key={link.href}>
                   <Link
-                    href={apt.href}
+                    href={link.href}
                     className="text-slate-400 text-sm hover:text-white transition-colors"
                   >
-                    {apt.label}
+                    {link.label}
                   </Link>
                 </li>
               ))}

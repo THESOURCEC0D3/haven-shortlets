@@ -21,7 +21,18 @@ import {
   getApartmentBySlug,
   apartments,
   formatPrice,
+  typeSlugFor,
+  typeLabelFor,
 } from "@/lib/data/apartments";
+import { getAreaBySlug } from "@/lib/data/areas";
+import { pageMetadata } from "@/lib/seo/metadata";
+import JsonLd from "@/components/seo/JsonLd";
+import FaqSection from "@/components/seo/FaqSection";
+import {
+  apartmentSchema,
+  breadcrumbSchema,
+  faqSchema,
+} from "@/lib/seo/structured-data";
 import { supabase } from "@/lib/supabase";
 import { ApartmentAvailability } from "@/lib/types";
 
@@ -36,13 +47,15 @@ export async function generateMetadata({
   const apartment = getApartmentBySlug(slug);
 
   if (!apartment) {
-    return { title: "Apartment Not Found — Haven Shortlets PH" };
+    return { title: "Apartment Not Found" };
   }
 
-  return {
-    title: `${apartment.name} — Haven Shortlets PH`,
+  return pageMetadata({
+    title: apartment.name,
     description: apartment.shortDescription,
-  };
+    path: `/apartments/${apartment.slug}`,
+    image: apartment.images[0],
+  });
 }
 
 export function generateStaticParams() {
@@ -74,10 +87,63 @@ export default async function ApartmentPage({ params }: ApartmentPageProps) {
   const availability = availabilityData as ApartmentAvailability | null;
   const isAvailable = availability?.available ?? true;
 
+  const area = getAreaBySlug(apartment.area);
+  const typeSlug = typeSlugFor(apartment);
+  const typeLabel = typeLabelFor(typeSlug);
+
+  // Per-apartment FAQs — these double as visible content and FAQPage schema,
+  // giving AI search engines clean question→answer chunks to quote.
+  const faqs = [
+    {
+      question: `How much is the ${apartment.name} per night?`,
+      answer: `The ${apartment.name} is ${formatPrice(
+        apartment.pricePerNight,
+      )} per night, ${formatPrice(
+        apartment.pricePerWeek,
+      )} per week, or ${formatPrice(
+        apartment.pricePerMonth,
+      )} per month. These are direct booking rates with no Airbnb or platform fees.`,
+    },
+    {
+      question: `Where is the ${apartment.name} located?`,
+      answer: `It is located in ${apartment.location}. ${
+        area?.intro ?? ""
+      }`.trim(),
+    },
+    {
+      question: `What is included in the ${apartment.name}?`,
+      answer: `The apartment sleeps up to ${
+        apartment.maxGuests
+      } guests and includes ${apartment.amenities
+        .slice(0, 6)
+        .join(", ")
+        .toLowerCase()}, plus 24/7 power supply.`,
+    },
+    {
+      question: "How do I book this apartment?",
+      answer:
+        "Book directly via WhatsApp or phone for instant confirmation — usually within 30 minutes. Booking direct saves you up to 25% versus Airbnb because there are no platform fees.",
+    },
+  ];
+
   const whatsappMessage = `Hello Haven Shortlets, I am interested in booking the ${apartment.name}. Please confirm availability and send me the booking details.`;
 
   return (
     <div className="min-h-screen bg-ivory">
+      <JsonLd
+        data={[
+          apartmentSchema(apartment, area),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Apartments", path: "/apartments" },
+            {
+              name: apartment.name,
+              path: `/apartments/${apartment.slug}`,
+            },
+          ]),
+          faqSchema(faqs),
+        ]}
+      />
       {/* Back Navigation */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -183,6 +249,32 @@ export default async function ApartmentPage({ params }: ApartmentPageProps) {
                 ))}
               </div>
             </div>
+
+            {/* Explore similar (internal links help crawl depth + relevance) */}
+            {area && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <h2 className="font-display text-xl font-bold text-charcoal mb-4">
+                  Explore More in {area.name}
+                </h2>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href={`/port-harcourt/${area.slug}`}
+                    className="text-sm text-charcoal underline decoration-gold underline-offset-4 hover:text-gold transition-colors"
+                  >
+                    All short-lets in {area.name}
+                  </Link>
+                  <Link
+                    href={`/port-harcourt/${area.slug}/${typeSlug}`}
+                    className="text-sm text-charcoal underline decoration-gold underline-offset-4 hover:text-gold transition-colors"
+                  >
+                    {typeLabel} apartments in {area.name}
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* FAQ — visible answers that mirror the FAQPage schema above */}
+            <FaqSection faqs={faqs} />
           </div>
 
           {/* Right Column — Sidebar */}
