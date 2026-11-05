@@ -3,38 +3,32 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ApartmentCard from "@/components/apartments/ApartmentCard";
 import { getFeaturedApartments } from "@/lib/data/apartments";
-import { supabase } from "@/lib/supabase";
-import { ApartmentAvailability } from "@/lib/types";
+import { getAvailabilityStatuses } from "@/lib/availability";
 
 const featuredApartments = getFeaturedApartments();
 
 export default async function ApartmentsPreview() {
-  const { data: availabilityData } = await supabase
-    .from("apartments")
-    .select("*");
-
-  const availabilityMap = new Map<string, ApartmentAvailability>();
-  if (availabilityData) {
-    availabilityData.forEach((item: ApartmentAvailability) => {
-      availabilityMap.set(item.slug, item);
-    });
-  }
+  // Uses the shared helper instead of a hand-rolled copy of the same
+  // query-and-build-a-Map loop. There were three such copies — the abstraction
+  // existed in lib/availability.ts and simply had not been adopted, which is
+  // what happens when a helper is extracted after its callers already exist.
+  const statuses = await getAvailabilityStatuses();
 
   return (
     <section className="py-20 bg-ivory-dark">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="max-w-xl">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-0.5 bg-gold" />
-              <span className="text-gold text-sm font-medium tracking-widest uppercase">
+              <span className="text-gold-text text-sm font-medium tracking-widest uppercase">
                 Our Apartments
               </span>
             </div>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-charcoal leading-tight">
               Every Apartment.{" "}
-              <span className="italic text-gold">Verified.</span>
+              <span className="italic text-gold-text">Verified.</span>
             </h2>
           </div>
           <Link href="/apartments" className="shrink-0 hidden md:block">
@@ -54,7 +48,7 @@ export default async function ApartmentsPreview() {
             <ApartmentCard
               key={apartment.id}
               apartment={apartment}
-              availability={availabilityMap.get(apartment.slug) ?? null}
+              status={statuses[apartment.slug]}
             />
           ))}
         </div>
@@ -77,7 +71,7 @@ export default async function ApartmentsPreview() {
           <p className="text-center text-slate-500 text-sm">
             All apartments include 24/7 power supply, high-speed Wi-Fi, and air
             conditioning. Prices shown are direct booking rates —
-            <span className="text-gold font-medium">
+            <span className="text-gold-text font-medium">
               {" "}
               no platform fees added.
             </span>

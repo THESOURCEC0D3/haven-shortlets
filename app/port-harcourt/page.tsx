@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import { pageMetadata } from "@/lib/seo/metadata";
 import JsonLd from "@/components/seo/JsonLd";
 import FaqSection from "@/components/seo/FaqSection";
+import ConversionBridge from "@/components/shared/ConversionBridge";
 import ApartmentCard from "@/components/apartments/ApartmentCard";
 import {
   breadcrumbSchema,
@@ -11,7 +12,7 @@ import {
 } from "@/lib/seo/structured-data";
 import { apartments, getApartmentsByArea } from "@/lib/data/apartments";
 import { areas } from "@/lib/data/areas";
-import { getAvailabilityMap } from "@/lib/availability";
+import { getAvailabilityStatuses } from "@/lib/availability";
 
 export const metadata = pageMetadata({
   title: "Short-Let Apartments in Port Harcourt",
@@ -43,7 +44,7 @@ const faqs = [
 ];
 
 export default async function PortHarcourtHub() {
-  const availabilityMap = await getAvailabilityMap();
+  const statuses = await getAvailabilityStatuses();
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -78,7 +79,7 @@ export default async function PortHarcourtHub() {
           return (
             <section key={area.slug}>
               <div className="flex items-center gap-2 mb-2">
-                <MapPin className="w-5 h-5 text-gold" />
+                <MapPin className="w-5 h-5 text-gold-text" />
                 <h2 className="font-display text-2xl font-bold text-charcoal">
                   Short-Lets in {area.name}
                 </h2>
@@ -97,7 +98,7 @@ export default async function PortHarcourtHub() {
                   <ApartmentCard
                     key={apartment.id}
                     apartment={apartment}
-                    availability={availabilityMap[apartment.slug] ?? null}
+                    status={statuses[apartment.slug]}
                   />
                 ))}
               </div>
@@ -106,6 +107,11 @@ export default async function PortHarcourtHub() {
         })}
 
         <FaqSection faqs={faqs} />
+
+        <ConversionBridge
+          heading="Ready to book your Port Harcourt stay?"
+          whatsappMessage="Hello Haven Shortlets, I am looking for a short-let apartment in Port Harcourt. My dates are: "
+        />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { pageMetadata } from "@/lib/seo/metadata";
 import JsonLd from "@/components/seo/JsonLd";
 import FaqSection from "@/components/seo/FaqSection";
+import ConversionBridge from "@/components/shared/ConversionBridge";
 import ApartmentCard from "@/components/apartments/ApartmentCard";
 import {
   breadcrumbSchema,
@@ -16,7 +17,7 @@ import {
   typeLabelFor,
 } from "@/lib/data/apartments";
 import { areas, getAreaBySlug } from "@/lib/data/areas";
-import { getAvailabilityMap } from "@/lib/availability";
+import { getAvailabilityStatuses } from "@/lib/availability";
 
 interface AreaPageProps {
   params: Promise<{ area: string }>;
@@ -47,7 +48,7 @@ export default async function AreaPage({ params }: AreaPageProps) {
   if (!area) notFound();
 
   const areaApts = getApartmentsByArea(area.slug);
-  const availabilityMap = await getAvailabilityMap();
+  const statuses = await getAvailabilityStatuses();
 
   // Distinct property types present in this area, for internal links to the
   // narrower long-tail pages.
@@ -100,7 +101,8 @@ export default async function AreaPage({ params }: AreaPageProps) {
             <ApartmentCard
               key={apartment.id}
               apartment={apartment}
-              availability={availabilityMap[apartment.slug] ?? null}
+              status={statuses[apartment.slug]}
+              headingLevel="h2"
             />
           ))}
         </div>
@@ -114,6 +116,13 @@ export default async function AreaPage({ params }: AreaPageProps) {
         </section>
 
         <FaqSection faqs={area.faqs} />
+
+        <ConversionBridge
+          heading={`Ready to book in ${area.name}?`}
+          whatsappMessage={`Hello Haven Shortlets, I am looking for a short-let apartment in ${area.name}, Port Harcourt. My dates are: `}
+          browseHref="/apartments"
+          browseLabel="Compare all apartments"
+        />
       </div>
     </div>
   );

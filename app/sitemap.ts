@@ -52,6 +52,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.5,
     },
+    // "Haven Shortlets cancellation policy" is a real query from a guest who is
+    // already considering booking, so this page is worth indexing rather than
+    // treating as boilerplate.
+    {
+      url: absoluteUrl("/policies"),
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.4,
+    },
+    {
+      url: absoluteUrl("/privacy"),
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
   ];
 
   // Apartment detail pages — include the listing images for image-sitemap.

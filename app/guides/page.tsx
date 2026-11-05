@@ -59,7 +59,7 @@ export default function GuidesIndex() {
                 <p className="text-sm text-slate-500 leading-relaxed mb-4 line-clamp-3">
                   {guide.description}
                 </p>
-                <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-gold">
+                <span className="mt-auto inline-flex items-center gap-1 text-sm font-medium text-gold-text">
                   Read guide
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>

@@ -19,19 +19,48 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+
+        // ---- Brand variants -------------------------------------------------
+        // These existed already, but as raw className strings copy-pasted into
+        // ~15 call sites. Naming them here means the brand button is defined in
+        // ONE place: change the primary action colour once and every button
+        // follows. Copy-pasted styling is how a design system drifts.
+        //
+        // `primary` — the main site action (gold on charcoal text, 9.06:1 AAA).
+        primary:
+          "bg-gold text-charcoal font-semibold hover:bg-gold-dark focus-visible:ring-gold/50",
+        // `whatsapp` — the booking channel. Semantic colour, not the accent.
+        // green-700 rather than green-500: white-on-green-500 measures 2.28:1
+        // and is unreadable in sunlight, which is where this gets tapped.
+        whatsapp:
+          "bg-whatsapp text-white hover:bg-whatsapp-dark focus-visible:ring-whatsapp/50",
+        // `onDark` — outline button sitting on a charcoal/photo ground.
+        onDark:
+          "border-white/40 text-white hover:bg-white/10 hover:border-white focus-visible:ring-white/50",
+        // `onLight` — outline button on white/ivory.
+        onLight:
+          "border-charcoal text-charcoal hover:bg-charcoal hover:text-white",
       },
       size: {
+        // TOUCH-TARGET SCALE (re-tuned from the shadcn "radix-nova" default).
+        //
+        // The upstream scale is h-8/h-7/h-9 (32/28/36px) — dimensions for a
+        // desktop application, where the pointer is a 1px mouse cursor. This is
+        // a mobile-first booking site where the pointer is a thumb, so the
+        // whole scale shifts up to Apple's and Google's published 44px minimum.
+        // Bumping it here fixes every button on the site at once rather than
+        // patching call sites one by one.
         default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-        icon: "size-8",
+          "h-11 gap-2 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        xs: "h-8 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-9 gap-1.5 rounded-[min(var(--radius-md),12px)] px-3 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: "h-12 gap-2 px-6 text-base has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
+        icon: "size-11",
         "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+          "size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         "icon-sm":
-          "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
-        "icon-lg": "size-9",
+          "size-9 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
+        "icon-lg": "size-12",
       },
     },
     defaultVariants: {

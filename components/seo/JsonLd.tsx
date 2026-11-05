@@ -23,9 +23,21 @@ export default function JsonLd({ data }: JsonLdProps) {
         <script
           key={i}
           type="application/ld+json"
-          // JSON.stringify output is safe to inject; it can't contain a raw
-          // </script> sequence because the quotes/slashes are escaped as data.
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(block) }}
+          // The previous comment here claimed JSON.stringify made this safe
+          // because "the quotes/slashes are escaped as data". That is FALSE:
+          // JSON.stringify does not escape the forward slash, so a value
+          // containing `</script>` would close this tag and execute whatever
+          // followed. The code happened to be safe only because every value was
+          // a compile-time constant we authored — the moment any of it comes
+          // from Supabase, a CMS, or a guest review, it is stored XSS.
+          //
+          // `<` is a valid JSON escape for `<`. Parsers read it identically
+          // to a literal `<`, so schema validity is unaffected, but it can no
+          // longer terminate the script element. Escaping at the boundary is
+          // safer than trusting every future caller to sanitise its input.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(block).replace(/</g, "\\u003c"),
+          }}
         />
       ))}
     </>

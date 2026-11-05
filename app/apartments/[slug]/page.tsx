@@ -16,15 +16,24 @@ import {
 import { Button } from "@/components/ui/button";
 import WhatsAppButton from "@/components/shared/WhatsAppButton";
 import ApartmentGallery from "@/components/apartments/ApartmentGallery";
-import AvailabilityBadge from "@/components/apartments/AvailabilityBadge";
+import AvailabilityBadge, {
+  AvailabilityNote,
+} from "@/components/apartments/AvailabilityBadge";
+import ApartmentEssentials from "@/components/apartments/ApartmentEssentials";
+import LocationPanel from "@/components/apartments/LocationPanel";
+import SimilarApartments from "@/components/apartments/SimilarApartments";
+import StickyBookingBar from "@/components/apartments/StickyBookingBar";
+import HavenPromise from "@/components/shared/HavenPromise";
 import {
   getApartmentBySlug,
   apartments,
   formatPrice,
   typeSlugFor,
   typeLabelFor,
+  airbnbEquivalent,
 } from "@/lib/data/apartments";
 import { getAreaBySlug } from "@/lib/data/areas";
+import { policyFaqs } from "@/lib/data/policies";
 import { pageMetadata } from "@/lib/seo/metadata";
 import JsonLd from "@/components/seo/JsonLd";
 import FaqSection from "@/components/seo/FaqSection";
@@ -33,12 +42,15 @@ import {
   breadcrumbSchema,
   faqSchema,
 } from "@/lib/seo/structured-data";
-import { supabase } from "@/lib/supabase";
-import { ApartmentAvailability } from "@/lib/types";
+import { getAvailabilityStatuses } from "@/lib/availability";
+import { siteConfig, telHref } from "@/lib/site";
 
 interface ApartmentPageProps {
   params: Promise<{ slug: string }>;
 }
+
+/** Safety net under the event-based revalidation in lib/actions.ts. */
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -59,16 +71,31 @@ export async function generateMetadata({
 }
 
 export function generateStaticParams() {
-  return apartments.map((apartment) => ({
-    slug: apartment.slug,
-  }));
+  return apartments.map((apartment) => ({ slug: apartment.slug }));
 }
 
-const highlights = [
-  { icon: Zap, label: "24/7 Power Supply" },
-  { icon: Wifi, label: "High-Speed Wi-Fi" },
-  { icon: Wind, label: "Air Conditioning" },
+/**
+ * The reassurance pills shown under the stats row.
+ *
+ * These are now DERIVED from the apartment's own amenities rather than a
+ * hardcoded module constant rendered unconditionally. The old version claimed
+ * "24/7 Power / Wi-Fi / Air Conditioning" on every listing regardless of what
+ * the apartment actually had — true for all six units today, but a lie waiting
+ * to happen on the seventh, on the very page that promises "What You See Is
+ * What You Get". Same class of bug as a duplicated phone number: a fact stored
+ * in two places will eventually disagree with itself.
+ */
+const HIGHLIGHT_MATCHERS = [
+  { icon: Zap, label: "24/7 power supply", match: /power/i },
+  { icon: Wifi, label: "High-speed Wi-Fi", match: /wi-?fi|internet/i },
+  { icon: Wind, label: "Air conditioning", match: /air condition/i },
 ];
+
+function highlightsFor(amenities: string[]) {
+  return HIGHLIGHT_MATCHERS.filter((h) =>
+    amenities.some((a) => h.match.test(a)),
+  );
+}
 
 export default async function ApartmentPage({ params }: ApartmentPageProps) {
   const { slug } = await params;
@@ -78,55 +105,50 @@ export default async function ApartmentPage({ params }: ApartmentPageProps) {
     notFound();
   }
 
-  const { data: availabilityData } = await supabase
-    .from("apartments")
-    .select("*")
-    .eq("slug", slug)
-    .single();
-
-  const availability = availabilityData as ApartmentAvailability | null;
-  const isAvailable = availability?.available ?? true;
+  // One shared, error-aware read. Also gives us every other apartment's status
+  // for the "similar apartments" ranking below.
+  const statuses = await getAvailabilityStatuses();
+  const status = statuses[apartment.slug];
 
   const area = getAreaBySlug(apartment.area);
   const typeSlug = typeSlugFor(apartment);
   const typeLabel = typeLabelFor(typeSlug);
+  const highlights = highlightsFor(apartment.amenities);
+  const airbnbPrice = airbnbEquivalent(apartment.pricePerNight);
+  const weeklySaving = airbnbPrice * 7 - apartment.pricePerWeek;
 
-  // Per-apartment FAQs — these double as visible content and FAQPage schema,
-  // giving AI search engines clean question→answer chunks to quote.
-  const faqs = [
+  // Listing FAQs plus the shared policy FAQs. Both render as visible text AND
+  // as FAQPage schema from the same source, so the two can never disagree —
+  // schema that doesn't match the visible page is a Google policy violation.
+  const listingFaqs = [
     {
       question: `How much is the ${apartment.name} per night?`,
-      answer: `The ${apartment.name} is ${formatPrice(
-        apartment.pricePerNight,
-      )} per night, ${formatPrice(
-        apartment.pricePerWeek,
-      )} per week, or ${formatPrice(
-        apartment.pricePerMonth,
-      )} per month. These are direct booking rates with no Airbnb or platform fees.`,
+      answer: `The ${apartment.name} is ${formatPrice(apartment.pricePerNight)} per night, ${formatPrice(apartment.pricePerWeek)} per week, or ${formatPrice(apartment.pricePerMonth)} per month. These are direct booking rates with no platform fees — the same apartment booked through Airbnb would cost about ${formatPrice(airbnbPrice)} per night once service fees are added.`,
     },
     {
       question: `Where is the ${apartment.name} located?`,
-      answer: `It is located in ${apartment.location}. ${
-        area?.intro ?? ""
-      }`.trim(),
+      answer: `It is in ${apartment.location}. ${area?.intro ?? ""}`.trim(),
+    },
+    {
+      question: `How many people can stay in the ${apartment.name}?`,
+      answer: `Up to ${apartment.maxGuests} guests. ${apartment.sleeping}`,
     },
     {
       question: `What is included in the ${apartment.name}?`,
-      answer: `The apartment sleeps up to ${
-        apartment.maxGuests
-      } guests and includes ${apartment.amenities
-        .slice(0, 6)
-        .join(", ")
-        .toLowerCase()}, plus 24/7 power supply.`,
+      answer: `${apartment.amenities.slice(0, 6).join(", ")}, plus 24/7 power supply. Every Haven Shortlets apartment includes uninterrupted power, fast Wi-Fi and air conditioning as standard.`,
     },
     {
       question: "How do I book this apartment?",
-      answer:
-        "Book directly via WhatsApp or phone for instant confirmation — usually within 30 minutes. Booking direct saves you up to 25% versus Airbnb because there are no platform fees.",
+      answer: `Message us on WhatsApp or call ${siteConfig.phoneDisplay} with your dates. We confirm availability and send a written booking confirmation — apartment, dates, total and cancellation terms — usually within ${siteConfig.responseTimeMinutes} minutes, before any money moves.`,
     },
   ];
 
-  const whatsappMessage = `Hello Haven Shortlets, I am interested in booking the ${apartment.name}. Please confirm availability and send me the booking details.`;
+  const faqs = [...listingFaqs, ...policyFaqs(apartment.minimumStayNights)];
+
+  const bookingMessage =
+    status.state === "booked"
+      ? `Hello Haven Shortlets, the ${apartment.name} shows as booked. Please let me know when it frees up, or suggest a similar apartment.`
+      : `Hello Haven Shortlets, I would like to book the ${apartment.name} (${formatPrice(apartment.pricePerNight)}/night). My dates are: `;
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -136,257 +158,323 @@ export default async function ApartmentPage({ params }: ApartmentPageProps) {
           breadcrumbSchema([
             { name: "Home", path: "/" },
             { name: "Apartments", path: "/apartments" },
-            {
-              name: apartment.name,
-              path: `/apartments/${apartment.slug}`,
-            },
+            { name: apartment.name, path: `/apartments/${apartment.slug}` },
           ]),
           faqSchema(faqs),
         ]}
       />
-      {/* Back Navigation */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+
+      {/* Back Navigation. mt-16 clears the fixed navbar. */}
+      <div className="bg-white border-b border-slate-200 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <Link
             href="/apartments"
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-charcoal transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-slate-600 hover:text-charcoal transition-colors text-sm rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-text"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Apartments
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            All apartments
           </Link>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            {/* Gallery */}
             <ApartmentGallery
               images={apartment.images}
+              alts={apartment.imageAlts}
               title={apartment.name}
             />
 
-            {/* Header Card */}
+            {/* Header Card.
+                THE MOBILE PRICE FIX. On a phone the two-column grid collapses
+                and DOM order becomes render order, so the booking sidebar used
+                to appear AFTER the gallery, description, amenities, internal
+                links and four FAQ accordions — roughly five screens of scrolling
+                before a guest could see the price. Price is the single most
+                sought fact on a listing, so a compact price block now sits in
+                the header and is hidden from lg upward where the sidebar takes
+                over. Same information, ordered by what the guest needs first. */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                 <div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold text-charcoal mb-2">
                     {apartment.name}
                   </h1>
-                  <p className="text-slate-500 text-sm">{apartment.location}</p>
+                  <p className="text-slate-600 text-sm">{apartment.location}</p>
                 </div>
-                <AvailabilityBadge availability={availability} size="md" />
+                {/* Rendered once per page. It used to appear both here and in
+                    the sidebar, telling the guest the same thing twice. */}
+                <AvailabilityBadge status={status} size="md" />
+              </div>
+
+              <div className="lg:hidden border-t border-slate-100 pt-4 mb-4">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-3xl font-bold text-charcoal">
+                    {formatPrice(apartment.pricePerNight)}
+                  </span>
+                  <span className="text-slate-600 text-sm">/night</span>
+                </div>
+                <p className="text-sm text-slate-600 mt-1">
+                  <span className="line-through">
+                    {formatPrice(airbnbPrice)}
+                  </span>{" "}
+                  <span className="font-medium text-green-700">
+                    on a platform — you save{" "}
+                    {formatPrice(airbnbPrice - apartment.pricePerNight)} a night
+                  </span>
+                </p>
+                <p className="text-xs text-slate-600 mt-1">
+                  {formatPrice(apartment.pricePerWeek)}/week ·{" "}
+                  {formatPrice(apartment.pricePerMonth)}/month · minimum{" "}
+                  {apartment.minimumStayNights} nights
+                </p>
               </div>
 
               {/* Stats Row */}
-              <div className="flex flex-wrap items-center gap-6 py-4 border-t border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Bed className="w-5 h-5 text-gold" />
-                  <span className="text-slate-700 text-sm font-medium">
-                    {apartment.bedrooms}{" "}
-                    {apartment.bedrooms > 1 ? "Bedrooms" : "Bedroom"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Bath className="w-5 h-5 text-gold" />
-                  <span className="text-slate-700 text-sm font-medium">
-                    {apartment.bathrooms}{" "}
-                    {apartment.bathrooms > 1 ? "Bathrooms" : "Bathroom"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-gold" />
-                  <span className="text-slate-700 text-sm font-medium">
-                    Up to {apartment.maxGuests} guests
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Maximize2 className="w-5 h-5 text-gold" />
-                  <span className="text-slate-700 text-sm font-medium">
-                    {apartment.size} sqm
-                  </span>
-                </div>
-              </div>
+              <dl className="flex flex-wrap items-center gap-x-6 gap-y-3 py-4 border-t border-slate-100">
+                <Stat icon={Bed} label="Bedrooms">
+                  {apartment.propertyType === "studio"
+                    ? "Studio"
+                    : `${apartment.bedrooms} ${apartment.bedrooms > 1 ? "bedrooms" : "bedroom"}`}
+                </Stat>
+                <Stat icon={Bath} label="Bathrooms">
+                  {apartment.bathrooms}{" "}
+                  {apartment.bathrooms > 1 ? "bathrooms" : "bathroom"}
+                </Stat>
+                <Stat icon={Users} label="Sleeps">
+                  Up to {apartment.maxGuests} guests
+                </Stat>
+                <Stat icon={Maximize2} label="Size">
+                  {apartment.size} sqm
+                </Stat>
+              </dl>
 
-              {/* Always Included */}
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-100">
-                {highlights.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center gap-2 bg-gold/10 rounded-full px-3 py-1.5"
-                  >
-                    <item.icon className="w-3.5 h-3.5 text-gold" />
-                    <span className="text-xs font-medium text-charcoal">
-                      {item.label}
+              {highlights.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-4 border-t border-slate-100">
+                  {highlights.map((item) => (
+                    <span
+                      key={item.label}
+                      className="flex items-center gap-2 bg-gold/15 rounded-full px-3 py-1.5"
+                    >
+                      <item.icon
+                        className="size-3.5 text-gold-text"
+                        aria-hidden="true"
+                      />
+                      <span className="text-xs font-medium text-charcoal">
+                        {item.label}
+                      </span>
                     </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Description */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <section className="bg-white rounded-2xl border border-slate-200 p-6">
               <h2 className="font-display text-xl font-bold text-charcoal mb-4">
-                About This Apartment
+                About this apartment
               </h2>
-              <p className="text-slate-600 leading-relaxed">
+              <p className="text-slate-700 leading-relaxed">
                 {apartment.description}
               </p>
-            </div>
+            </section>
 
             {/* Amenities */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <section className="bg-white rounded-2xl border border-slate-200 p-6">
               <h2 className="font-display text-xl font-bold text-charcoal mb-6">
-                What Is Included
+                What&apos;s included
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {apartment.amenities.map((amenity) => (
-                  <div key={amenity} className="flex items-center gap-3">
-                    <CheckCircle className="w-4 h-4 text-gold shrink-0" />
+                  <li key={amenity} className="flex items-center gap-3">
+                    <CheckCircle
+                      className="size-4 text-gold-text shrink-0"
+                      aria-hidden="true"
+                    />
                     <span className="text-sm text-slate-700">{amenity}</span>
-                  </div>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            </section>
 
-            {/* Explore similar (internal links help crawl depth + relevance) */}
+            {/* Check-in, sleeping, house rules, cancellation, payment — the
+                block that was missing from every page on this site. */}
+            <ApartmentEssentials apartment={apartment} />
+
+            {/* Where you'll be + drive times to the places guests ask about. */}
+            <LocationPanel
+              location={apartment.location}
+              mapQuery={apartment.mapQuery}
+              nearby={apartment.nearby}
+              areaName={area?.name}
+              areaHref={area ? `/port-harcourt/${area.slug}` : undefined}
+            />
+
+            {/* Internal links help crawl depth and let a guest widen their
+                search without leaving the funnel. */}
             {area && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <nav
+                aria-label="Explore more"
+                className="bg-white rounded-2xl border border-slate-200 p-6"
+              >
                 <h2 className="font-display text-xl font-bold text-charcoal mb-4">
-                  Explore More in {area.name}
+                  Explore more in {area.name}
                 </h2>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-x-5 gap-y-2">
                   <Link
                     href={`/port-harcourt/${area.slug}`}
-                    className="text-sm text-charcoal underline decoration-gold underline-offset-4 hover:text-gold transition-colors"
+                    className="text-sm text-charcoal underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-text transition-colors"
                   >
                     All short-lets in {area.name}
                   </Link>
                   <Link
                     href={`/port-harcourt/${area.slug}/${typeSlug}`}
-                    className="text-sm text-charcoal underline decoration-gold underline-offset-4 hover:text-gold transition-colors"
+                    className="text-sm text-charcoal underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-text transition-colors"
                   >
                     {typeLabel} apartments in {area.name}
                   </Link>
+                  <Link
+                    href={`/guides/${area.slug}-neighbourhood-guide`}
+                    className="text-sm text-charcoal underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-text transition-colors"
+                  >
+                    {area.name} neighbourhood guide
+                  </Link>
                 </div>
-              </div>
+              </nav>
             )}
 
-            {/* FAQ — visible answers that mirror the FAQPage schema above */}
             <FaqSection faqs={faqs} />
+
+            {/* Recovery path: alternatives the guest could actually book. */}
+            <SimilarApartments current={apartment} statuses={statuses} />
           </div>
 
-          {/* Right Column — Sidebar */}
-          <div className="flex flex-col gap-6">
-            {/* Price + Booking Card */}
+          {/* Right Column — Sidebar (desktop only; mobile uses the sticky bar) */}
+          <div className="hidden lg:flex flex-col gap-6">
             <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-24">
-              {/* Price Tiers */}
-              <div className="mb-6 pb-6 border-b border-slate-100">
-                <div className="flex items-baseline gap-2 mb-4">
+              <div className="mb-5 pb-5 border-b border-slate-100">
+                <div className="flex items-baseline gap-2 mb-1">
                   <span className="font-display text-4xl font-bold text-charcoal">
                     {formatPrice(apartment.pricePerNight)}
                   </span>
-                  <span className="text-slate-400 text-sm">/night</span>
+                  <span className="text-slate-600 text-sm">/night</span>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-500">Weekly rate</span>
-                    <span className="text-sm font-semibold text-charcoal">
-                      {formatPrice(apartment.pricePerWeek)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-slate-500">Monthly rate</span>
-                    <span className="text-sm font-semibold text-charcoal">
-                      {formatPrice(apartment.pricePerMonth)}
-                    </span>
-                  </div>
+
+                {/* Anchor against the platform price at the point of decision.
+                    This argument previously lived only on the homepage, so a
+                    guest arriving from Google never saw it where it counts. */}
+                <p className="text-sm text-slate-600 mb-4">
+                  <span className="line-through">
+                    {formatPrice(airbnbPrice)}
+                  </span>{" "}
+                  <span className="font-medium text-green-700">
+                    booking through a platform
+                  </span>
+                </p>
+
+                <dl className="flex flex-col gap-2 tabular-nums">
+                  <Row term="Weekly rate">
+                    {formatPrice(apartment.pricePerWeek)}
+                  </Row>
+                  <Row term="Monthly rate">
+                    {formatPrice(apartment.pricePerMonth)}
+                  </Row>
+                  <Row term="Minimum stay">
+                    {apartment.minimumStayNights} nights
+                  </Row>
                   <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                    <span className="text-xs text-slate-400">
-                      Platform fees
-                    </span>
-                    <span className="text-xs font-semibold text-green-600">
-                      ₦0 — Book Direct
-                    </span>
+                    <dt className="text-xs text-slate-600">
+                      Cleaning &amp; platform fees
+                    </dt>
+                    <dd className="text-xs font-semibold text-green-700">₦0</dd>
                   </div>
-                </div>
-              </div>
+                </dl>
 
-              {/* Availability Status */}
-              <div className="mb-6">
-                <AvailabilityBadge availability={availability} size="md" />
-              </div>
-
-              {/* CTA Buttons */}
-              <div className="flex flex-col gap-3">
-                {isAvailable ? (
-                  <>
-                    <WhatsAppButton
-                      phone="2348098765432"
-                      message={whatsappMessage}
-                      label="Book on WhatsApp"
-                      className="w-full"
-                    />
-                    <a href="tel:+2348098765432">
-                      <Button
-                        variant="outline"
-                        className="w-full gap-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-white transition-all duration-300"
-                      >
-                        <Phone className="w-4 h-4" />
-                        Call to Book
-                      </Button>
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      disabled
-                      className="w-full bg-slate-100 text-slate-400 cursor-not-allowed"
-                    >
-                      Currently Unavailable
-                    </Button>
-                    <WhatsAppButton
-                      phone="2348098765432"
-                      message={`Hello Haven Shortlets, I am interested in the ${apartment.name} but I can see it is currently booked. Please let me know when it becomes available or suggest a similar apartment.`}
-                      label="Join Waitlist on WhatsApp"
-                      className="w-full"
-                    />
-                  </>
+                {weeklySaving > 0 && (
+                  <p className="mt-3 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-xs font-medium text-green-800">
+                    Book a week direct and keep {formatPrice(weeklySaving)}.
+                  </p>
                 )}
               </div>
 
-              {/* Trust Note */}
-              <p className="text-xs text-slate-400 text-center mt-4 leading-relaxed">
-                Prices shown are direct booking rates.{" "}
-                <span className="text-gold font-medium">
-                  No Airbnb fees. No surprises.
+              <div className="mb-5">
+                <AvailabilityNote status={status} />
+              </div>
+
+              {/* CTAs.
+                  Even when booked we lead with a WhatsApp action rather than a
+                  disabled button: a dead end loses the lead entirely, whereas
+                  the waitlist message captures it and invites an alternative. */}
+              <div className="flex flex-col gap-3">
+                <WhatsAppButton
+                  message={bookingMessage}
+                  label={
+                    status.state === "booked"
+                      ? "Ask about dates"
+                      : "Check availability"
+                  }
+                  size="lg"
+                  className="w-full"
+                />
+                <Button asChild variant="onLight" size="lg" className="w-full">
+                  <a href={telHref}>
+                    <Phone className="size-4" aria-hidden="true" />
+                    Call {siteConfig.phoneDisplay}
+                  </a>
+                </Button>
+              </div>
+
+              <p className="text-xs text-slate-600 text-center mt-4 leading-relaxed">
+                You get a written confirmation with dates, total and cancellation
+                terms{" "}
+                <span className="font-medium text-charcoal">
+                  before you pay anything
                 </span>
+                .
               </p>
             </div>
 
-            {/* Haven Promise Card */}
-            <div className="bg-charcoal rounded-2xl p-6 text-white">
-              <p className="font-display text-lg font-bold text-white mb-4">
-                The Haven Promise
-              </p>
-              <div className="flex flex-col gap-3">
-                {[
-                  "Exact apartment as advertised",
-                  "24/7 power in every apartment",
-                  "Response within 30 minutes",
-                  "Full refund if not as described",
-                ].map((promise) => (
-                  <div key={promise} className="flex items-center gap-3">
-                    <CheckCircle className="w-4 h-4 text-gold shrink-0" />
-                    <span className="text-white/70 text-sm">{promise}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <HavenPromise />
           </div>
         </div>
       </div>
+
+      {/* Persistent mobile booking bar. */}
+      <StickyBookingBar
+        name={apartment.name}
+        pricePerNight={apartment.pricePerNight}
+        status={status}
+        whatsappMessage={bookingMessage}
+      />
+    </div>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="size-5 text-gold-text" aria-hidden={true} />
+      <dt className="sr-only">{label}</dt>
+      <dd className="text-slate-800 text-sm font-medium">{children}</dd>
+    </div>
+  );
+}
+
+function Row({ term, children }: { term: string; children: React.ReactNode }) {
+  return (
+    <div className="flex justify-between items-center">
+      <dt className="text-sm text-slate-600">{term}</dt>
+      <dd className="text-sm font-semibold text-charcoal">{children}</dd>
     </div>
   );
 }

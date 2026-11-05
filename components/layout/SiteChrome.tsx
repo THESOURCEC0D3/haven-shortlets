@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ScrollReveal from "@/components/shared/ScrollReveal";
 
 /**
  * Wraps the public-facing site chrome (Navbar + Footer) around page content.
@@ -24,7 +25,13 @@ export default function SiteChrome({
   return (
     <>
       <Navbar />
-      <main>{children}</main>
+      <ScrollReveal />
+      {/* id is the skip-link target. tabIndex={-1} lets the browser move focus
+          here programmatically when the skip link is activated — without it,
+          focus stays on the link in some browsers and the skip does nothing. */}
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
       <Footer />
     </>
   );

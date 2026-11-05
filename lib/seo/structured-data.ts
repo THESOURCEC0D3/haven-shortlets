@@ -15,6 +15,7 @@ import { siteConfig, absoluteUrl } from "@/lib/site";
 import type { Apartment } from "@/lib/data/apartments";
 import { formatPrice } from "@/lib/data/apartments";
 import type { Area, AreaFaq } from "@/lib/data/areas";
+import { checkInPolicy } from "@/lib/data/policies";
 
 const ORG_ID = `${siteConfig.url}/#organization`;
 const WEBSITE_ID = `${siteConfig.url}/#website`;
@@ -50,6 +51,21 @@ export function localBusinessSchema() {
       { "@type": "Place", name: "GRA, Port Harcourt" },
       { "@type": "Place", name: "Woji, Port Harcourt" },
     ],
+    // Opening hours were already shown as visible text on the contact page but
+    // never reached the machine layer. Emitting them lets Google display
+    // "Open now / Closes 10pm" in local results — a free conversion win from
+    // data that already existed, and one more fact an LLM can cite correctly.
+    openingHoursSpecification: siteConfig.openingHours.map((slot) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: slot.days,
+      opens: slot.opens,
+      closes: slot.closes,
+    })),
+    // Check-in / check-out are first-class LodgingBusiness properties. Stating
+    // them in schema means an AI assistant asked "what time is check-in?" can
+    // answer from structured data rather than guessing from prose.
+    checkinTime: checkInPolicy.checkInFrom,
+    checkoutTime: checkInPolicy.checkOutBy,
     ...(siteConfig.sameAs.length ? { sameAs: siteConfig.sameAs } : {}),
   };
 }

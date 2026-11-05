@@ -10,7 +10,7 @@ export default function AboutHero() {
   return (
     <section className="bg-charcoal text-white py-20 md:py-28">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="max-w-3xl">
+        <div className="max-w-3xl hero-enter">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-8 h-0.5 bg-gold" />
             <span className="text-gold text-sm font-medium tracking-widest uppercase">
@@ -24,7 +24,7 @@ export default function AboutHero() {
             Operator
           </h1>
 
-          <p className="text-white/60 text-lg leading-relaxed mb-10">
+          <p className="text-white/80 text-lg leading-relaxed mb-10">
             We started Haven Shortlets because we were frustrated with the Port
             Harcourt short-let experience — misleading photos, power cuts that
             were not disclosed, hosts who disappeared after payment. We built

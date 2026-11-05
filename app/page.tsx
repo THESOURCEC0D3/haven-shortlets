@@ -37,13 +37,38 @@ export default async function HomePage() {
   return (
     <div>
       <JsonLd data={faqSchema(faqs)} />
+
+      {/* SECTION ORDER.
+       *
+       * Previously: Hero → WhyBookDirect → ApartmentsPreview → HowItWorks →
+       * Testimonials → FAQ → CTA.
+       *
+       * The problem was position two. WhyBookDirect is the largest block on the
+       * page (a savings table, a ₦171,000 callout, a four-card reasons grid) and
+       * it is 100% argument with 0% product. That sells the VALUE of a purchase
+       * before showing what is for sale — and nobody cares that they would save
+       * ₦171,000 until they want the apartment.
+       *
+       * The order now follows the questions a guest actually asks:
+       *
+       *   1. Am I in the right place?        → Hero
+       *   2. What have you actually got?     → ApartmentsPreview  (was 3rd)
+       *   3. Why you and not Airbnb?         → WhyBookDirect      (was 2nd)
+       *   4. Can I trust you?                → Testimonials       (was 5th)
+       *   5. How does this work?             → HowItWorks
+       *   6. What about…?                    → FAQ
+       *   7. Right, how do I book?           → CTABanner
+       *
+       * Social proof also moves up to sit adjacent to the value claim it
+       * substantiates, rather than two sections downstream of it.
+       */}
       <HeroSection />
-      <WhyBookDirect />
       <ApartmentsPreview />
-      <HowItWorks />
+      <WhyBookDirect />
       <Testimonials />
+      <HowItWorks />
       <section className="bg-ivory py-16">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div data-reveal className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <FaqSection faqs={faqs} />
         </div>
       </section>

@@ -1,9 +1,22 @@
+/** A landmark a guest actually cares about being near, with a drive time. */
+export interface NearbyPlace {
+  name: string;
+  minutes: number;
+}
+
 export interface Apartment {
   id: string;
   slug: string;
   name: string;
   location: string;
   area: "gra" | "woji";
+  /**
+   * Distinct from bedroom count. A studio and a one-bedroom are BOTH
+   * `bedrooms: 1`, so deriving type from bedroom count alone (as the
+   * programmatic landing pages did) collapsed them together and left
+   * "studio short let Port Harcourt" — a real search query — uncontested.
+   */
+  propertyType: "studio" | "apartment";
   bedrooms: number;
   bathrooms: number;
   size: number;
@@ -11,12 +24,46 @@ export interface Apartment {
   pricePerWeek: number;
   pricePerMonth: number;
   maxGuests: number;
+  /**
+   * How the guests actually sleep. "Sleeps 6" is ambiguous — six colleagues on
+   * a corporate booking need to know whether that is three double bedrooms or
+   * two doubles plus a sofa bed, and it is the most common pre-booking question
+   * after price and location. This is the shortlet equivalent of a floor plan.
+   */
+  sleeping: string;
+  /** Shortest stay accepted, in nights. */
+  minimumStayNights: number;
   description: string;
   shortDescription: string;
   images: string[];
+  /**
+   * Per-image alt text. For a product sold on its photographs, alt text IS the
+   * product description — "Executive Suite — photo 3" tells a blind guest
+   * nothing about whether they want to stay there.
+   */
+  imageAlts?: string[];
   amenities: string[];
+  /** Walk/drive times to the places guests ask about. */
+  nearby: NearbyPlace[];
+  /** Free-text address hint shown on the listing + used for the map link. */
+  mapQuery: string;
   featured: boolean;
 }
+
+/**
+ * Airbnb's guest service fee, as a multiplier on the base rate.
+ *
+ * 19% is the midpoint of the 14–16% guest service fee plus VAT that Nigerian
+ * guests typically see at checkout, and it is the SAME figure quoted in the
+ * homepage savings table's disclosed footnote. Keeping it here as one constant
+ * means the comparison on a listing card can never disagree with the comparison
+ * in the table — and a savings claim that contradicts itself across two pages
+ * is worse than making no claim at all.
+ */
+export const AIRBNB_FEE_MULTIPLIER = 1.19;
+
+export const airbnbEquivalent = (pricePerNight: number): number =>
+  Math.round((pricePerNight * AIRBNB_FEE_MULTIPLIER) / 500) * 500;
 
 export const apartments: Apartment[] = [
   {
@@ -25,6 +72,7 @@ export const apartments: Apartment[] = [
     name: "Executive Suite — GRA Phase 3",
     location: "GRA Phase 3, Port Harcourt",
     area: "gra",
+    propertyType: "apartment",
     bedrooms: 3,
     bathrooms: 3,
     size: 220,
@@ -32,6 +80,16 @@ export const apartments: Apartment[] = [
     pricePerWeek: 900000,
     pricePerMonth: 3000000,
     maxGuests: 6,
+    sleeping:
+      "3 bedrooms: 2 king beds and 1 queen bed. Each bedroom is ensuite. Sleeps 6 adults comfortably with no shared rooms.",
+    minimumStayNights: 2,
+    nearby: [
+      { name: "Peter Odili Road (banks, restaurants)", minutes: 5 },
+      { name: "Port Harcourt International Airport", minutes: 30 },
+      { name: "Trans-Amadi industrial area", minutes: 20 },
+      { name: "Genesis / Cilantro restaurants", minutes: 7 },
+    ],
+    mapQuery: "GRA Phase 3, Port Harcourt, Rivers State, Nigeria",
     description:
       "Our flagship executive suite in the heart of GRA Phase 3 — Port Harcourt's most prestigious neighbourhood. Luxuriously furnished with premium Italian fittings, smart TV in every room, and a fully equipped kitchen. Ideal for oil and gas executives, expatriates, corporate delegations, and diaspora returnees who demand the very best. The apartment features 24/7 uninterrupted power supply, high-speed fibre Wi-Fi, air conditioning in every room, and a dedicated parking space. Walking distance to top restaurants, banks, and corporate offices on Peter Odili Road.",
     shortDescription:
@@ -62,6 +120,7 @@ export const apartments: Apartment[] = [
     name: "Deluxe Studio — GRA Phase 2",
     location: "GRA Phase 2, Port Harcourt",
     area: "gra",
+    propertyType: "studio",
     bedrooms: 1,
     bathrooms: 1,
     size: 75,
@@ -69,6 +128,16 @@ export const apartments: Apartment[] = [
     pricePerWeek: 450000,
     pricePerMonth: 1500000,
     maxGuests: 2,
+    sleeping:
+      "Open-plan studio with 1 king bed. Sleeps 2. Best suited to a solo traveller or a couple.",
+    minimumStayNights: 2,
+    nearby: [
+      { name: "Peter Odili Road (banks, restaurants)", minutes: 6 },
+      { name: "Port Harcourt International Airport", minutes: 30 },
+      { name: "Trans-Amadi industrial area", minutes: 22 },
+      { name: "Supermarket & pharmacy", minutes: 4 },
+    ],
+    mapQuery: "GRA Phase 2, Port Harcourt, Rivers State, Nigeria",
     description:
       "A tastefully furnished studio apartment in the serene GRA Phase 2. Perfect for solo business travellers, contractors on short rotations, and couples seeking a private, comfortable base in Port Harcourt. The apartment features a king-size bed, a well-equipped kitchenette, smart TV, and 24/7 power supply. Compact, efficient, and everything you need — nothing you do not.",
     shortDescription:
@@ -96,6 +165,7 @@ export const apartments: Apartment[] = [
     name: "Premium 2-Bedroom — Woji",
     location: "Woji, Port Harcourt",
     area: "woji",
+    propertyType: "apartment",
     bedrooms: 2,
     bathrooms: 2,
     size: 140,
@@ -103,6 +173,16 @@ export const apartments: Apartment[] = [
     pricePerWeek: 600000,
     pricePerMonth: 2000000,
     maxGuests: 4,
+    sleeping:
+      "2 bedrooms: 1 king bed and 1 queen bed, both ensuite. Sleeps 4 with no shared rooms — suits two couples or colleagues travelling together.",
+    minimumStayNights: 2,
+    nearby: [
+      { name: "Trans-Amadi industrial area", minutes: 15 },
+      { name: "GRA", minutes: 15 },
+      { name: "Port Harcourt International Airport", minutes: 35 },
+      { name: "Shopping & supermarkets", minutes: 8 },
+    ],
+    mapQuery: "Woji, Port Harcourt, Rivers State, Nigeria",
     description:
       "A well-appointed 2-bedroom apartment in the rapidly developing Woji corridor — midway between Trans-Amadi and GRA. Ideal for small families, colleagues travelling together, or business guests who need more space. Both bedrooms are ensuite with quality fittings. The open-plan living and dining area is perfect for working or unwinding after a long day. 24/7 power supply and high-speed Wi-Fi included.",
     shortDescription:
@@ -131,6 +211,7 @@ export const apartments: Apartment[] = [
     name: "Classic 1-Bedroom — Woji",
     location: "Woji, Port Harcourt",
     area: "woji",
+    propertyType: "apartment",
     bedrooms: 1,
     bathrooms: 1,
     size: 90,
@@ -138,6 +219,16 @@ export const apartments: Apartment[] = [
     pricePerWeek: 390000,
     pricePerMonth: 1300000,
     maxGuests: 2,
+    sleeping:
+      "1 separate bedroom with a queen bed, plus a living room. Sleeps 2. The separate bedroom suits guests who need to work from the living area.",
+    minimumStayNights: 2,
+    nearby: [
+      { name: "Trans-Amadi industrial area", minutes: 18 },
+      { name: "GRA", minutes: 16 },
+      { name: "Port Harcourt International Airport", minutes: 35 },
+      { name: "Local market & pharmacy", minutes: 6 },
+    ],
+    mapQuery: "Woji, Port Harcourt, Rivers State, Nigeria",
     description:
       "A comfortable and well-maintained 1-bedroom apartment in a quiet estate in Woji. Suitable for solo professionals, couples, and anyone seeking affordable quality short-let accommodation outside the GRA premium corridor. Clean, functional, and reliably powered — everything a working professional needs for a productive stay in Port Harcourt.",
     shortDescription:
@@ -165,6 +256,7 @@ export const apartments: Apartment[] = [
     name: "Corporate Suite — GRA Phase 1",
     location: "GRA Phase 1, Port Harcourt",
     area: "gra",
+    propertyType: "apartment",
     bedrooms: 2,
     bathrooms: 2,
     size: 160,
@@ -172,6 +264,16 @@ export const apartments: Apartment[] = [
     pricePerWeek: 720000,
     pricePerMonth: 2400000,
     maxGuests: 4,
+    sleeping:
+      "2 bedrooms: 1 king bed and 1 twin-bed room, both ensuite. Sleeps 4. The twin room suits colleagues who need separate beds.",
+    minimumStayNights: 2,
+    nearby: [
+      { name: "Peter Odili Road (banks, corporate offices)", minutes: 4 },
+      { name: "Port Harcourt International Airport", minutes: 28 },
+      { name: "Trans-Amadi industrial area", minutes: 20 },
+      { name: "Restaurants & supermarkets", minutes: 5 },
+    ],
+    mapQuery: "GRA Phase 1, Port Harcourt, Rivers State, Nigeria",
     description:
       "A premium corporate-grade 2-bedroom suite in the exclusive GRA Phase 1 — Port Harcourt's oldest and most established highbrow neighbourhood. Designed for senior executives, corporate delegations, and high-value diaspora guests. Features a dedicated home office workspace, ultra-fast fibre internet, premium bedding, and a fully stocked kitchen. The building has a corporate reception desk and meeting room available to guests.",
     shortDescription:
@@ -203,6 +305,7 @@ export const apartments: Apartment[] = [
     name: "Cozy Studio — Woji",
     location: "Woji, Port Harcourt",
     area: "woji",
+    propertyType: "studio",
     bedrooms: 1,
     bathrooms: 1,
     size: 60,
@@ -210,6 +313,16 @@ export const apartments: Apartment[] = [
     pricePerWeek: 330000,
     pricePerMonth: 1100000,
     maxGuests: 2,
+    sleeping:
+      "Open-plan studio with 1 queen bed. Sleeps 2. Our most affordable option — compact, and everything works.",
+    minimumStayNights: 3,
+    nearby: [
+      { name: "Trans-Amadi industrial area", minutes: 15 },
+      { name: "GRA", minutes: 17 },
+      { name: "Port Harcourt International Airport", minutes: 35 },
+      { name: "Local market", minutes: 5 },
+    ],
+    mapQuery: "Woji, Port Harcourt, Rivers State, Nigeria",
     description:
       "Our most affordable studio option — cozy, clean, and fully equipped. Located in a well-maintained estate in Woji, this studio is ideal for budget-conscious business travellers, young professionals on rotation, and anyone who needs a clean, reliable base in Port Harcourt without the GRA price tag. Small but perfectly formed — everything works and nothing is broken.",
     shortDescription:
@@ -247,14 +360,31 @@ export const getApartmentBySlug = (slug: string): Apartment | undefined => {
 
 export type AreaSlug = Apartment["area"];
 
-/** URL-safe type slug for an apartment, e.g. "2-bedroom". */
+/**
+ * URL-safe type slug, e.g. "2-bedroom" or "studio".
+ *
+ * Previously this was `${bedrooms}-bedroom` unconditionally, which meant a
+ * studio and a one-bedroom both produced "1-bedroom". Two consequences:
+ *  - The site's own filter UI said "Studio / 1 Bedroom" while the landing pages
+ *    claimed "1-Bedroom", so the copy disagreed with itself.
+ *  - "studio short let Port Harcourt" is a real, high-intent search query that
+ *    had no page to rank. Three of six units are studios.
+ *
+ * NOTE: this changes URLs. /port-harcourt/gra/1-bedroom no longer exists (that
+ * unit is a studio); /port-harcourt/gra/studio does. Safe now because the site
+ * is pre-launch on a placeholder domain — after launch this would need 301
+ * redirects in next.config.ts.
+ */
 export const typeSlugFor = (apartment: Apartment): string =>
-  `${apartment.bedrooms}-bedroom`;
+  apartment.propertyType === "studio"
+    ? "studio"
+    : `${apartment.bedrooms}-bedroom`;
 
 /** Human label for a type slug, e.g. "2-bedroom" -> "2-Bedroom". */
 export const typeLabelFor = (typeSlug: string): string => {
+  if (typeSlug === "studio") return "Studio";
   const n = parseInt(typeSlug, 10);
-  return `${n}-Bedroom`;
+  return Number.isFinite(n) ? `${n}-Bedroom` : typeSlug;
 };
 
 export const getApartmentsByArea = (area: string): Apartment[] =>

@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { pageMetadata } from "@/lib/seo/metadata";
 import JsonLd from "@/components/seo/JsonLd";
 import FaqSection from "@/components/seo/FaqSection";
+import ConversionBridge from "@/components/shared/ConversionBridge";
 import ApartmentCard from "@/components/apartments/ApartmentCard";
 import {
   breadcrumbSchema,
@@ -18,7 +19,7 @@ import {
   typeLabelFor,
 } from "@/lib/data/apartments";
 import { getAreaBySlug } from "@/lib/data/areas";
-import { getAvailabilityMap } from "@/lib/availability";
+import { getAvailabilityStatuses } from "@/lib/availability";
 
 interface TypePageProps {
   params: Promise<{ area: string; type: string }>;
@@ -68,7 +69,7 @@ export default async function AreaTypePage({ params }: TypePageProps) {
   if (!ctx) notFound();
 
   const { area, apts, typeLabel, minPrice, title, intro } = ctx;
-  const availabilityMap = await getAvailabilityMap();
+  const statuses = await getAvailabilityStatuses();
 
   const faqs = [
     {
@@ -127,12 +128,20 @@ export default async function AreaTypePage({ params }: TypePageProps) {
             <ApartmentCard
               key={apartment.id}
               apartment={apartment}
-              availability={availabilityMap[apartment.slug] ?? null}
+              status={statuses[apartment.slug]}
+              headingLevel="h2"
             />
           ))}
         </div>
 
         <FaqSection faqs={faqs} />
+
+        <ConversionBridge
+          heading={`Ready to book a ${typeLabel.toLowerCase()} in ${area.name}?`}
+          whatsappMessage={`Hello Haven Shortlets, I am looking for a ${typeLabel.toLowerCase()} short-let in ${area.name}, Port Harcourt. My dates are: `}
+          browseHref={`/port-harcourt/${area.slug}`}
+          browseLabel={`All ${area.name} apartments`}
+        />
       </div>
     </div>
   );

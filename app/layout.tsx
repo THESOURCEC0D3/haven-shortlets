@@ -77,8 +77,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} antialiased`}>
+    // The font variables go on <html>, not <body>. globals.css applies
+    // `font-sans` to <html>, and a CSS custom property is only visible to an
+    // element and its descendants — declaring it on <body> would leave the
+    // <html> rule resolving an out-of-scope variable and silently falling back
+    // to the system font stack.
+    //
+    // lang is "en-NG": it matches the en_NG OpenGraph locale and the
+    // Intl.NumberFormat("en-NG") currency formatting, and it tells screen
+    // readers to use Nigerian English pronunciation.
+    <html lang="en-NG" className={`${inter.variable} ${playfair.variable}`}>
+      <body className="antialiased">
+        {/* Keyboard users would otherwise tab through the whole navbar on every
+            page before reaching content. First focusable element on the page. */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         {/* Site-wide structured data: who we are + the website entity. Rendered
             on every page so the business identity is unambiguous everywhere. */}
         <JsonLd data={[localBusinessSchema(), webSiteSchema()]} />

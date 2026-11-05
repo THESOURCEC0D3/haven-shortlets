@@ -36,17 +36,17 @@ const testimonials = [
 export default function Testimonials() {
   return (
     <section className="py-20 bg-ivory">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-2xl mb-16">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-0.5 bg-gold" />
-            <span className="text-gold text-sm font-medium tracking-widest uppercase">
+            <span className="text-gold-text text-sm font-medium tracking-widest uppercase">
               Guest Experiences
             </span>
           </div>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-charcoal leading-tight mb-4">
-            What Our Guests <span className="italic text-gold">Actually</span>{" "}
+            What Our Guests <span className="italic text-gold-text">Actually</span>{" "}
             Say
           </h2>
           <p className="text-slate-600 text-lg leading-relaxed">
@@ -86,7 +86,7 @@ export default function Testimonials() {
               <div
                 className={`text-xs mb-6 px-3 py-2 rounded-lg w-fit ${
                   index === 1
-                    ? "bg-white/10 text-white/60"
+                    ? "bg-white/10 text-white/80"
                     : "bg-ivory text-slate-500"
                 }`}
               >
@@ -120,7 +120,7 @@ export default function Testimonials() {
                   </p>
                   <p
                     className={`text-xs mt-0.5 ${
-                      index === 1 ? "text-white/50" : "text-slate-400"
+                      index === 1 ? "text-white/75" : "text-slate-600"
                     }`}
                   >
                     {testimonial.role}

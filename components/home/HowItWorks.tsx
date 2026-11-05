@@ -52,7 +52,7 @@ export default function HowItWorks() {
         />
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div data-reveal className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -66,7 +66,7 @@ export default function HowItWorks() {
             Book in <span className="italic text-gold">Four Steps.</span> Check
             In Today.
           </h2>
-          <p className="text-white/60 text-lg leading-relaxed">
+          <p className="text-white/80 text-lg leading-relaxed">
             No complicated forms, no waiting for approval, no surprises. Just a
             simple WhatsApp conversation and your apartment is secured.
           </p>
@@ -103,7 +103,7 @@ export default function HowItWorks() {
                   <h3 className="font-semibold text-white text-lg mb-2">
                     {step.title}
                   </h3>
-                  <p className="text-white/50 text-sm leading-relaxed">
+                  <p className="text-white/75 text-sm leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -119,12 +119,11 @@ export default function HowItWorks() {
               <p className="font-semibold text-white">
                 Ready to book your stay?
               </p>
-              <p className="text-white/50 text-sm">
+              <p className="text-white/75 text-sm">
                 WhatsApp us now and we confirm within 30 minutes.
               </p>
             </div>
             <WhatsAppButton
-              phone="2348098765432"
               message="Hello Haven Shortlets, I would like to book an apartment. Please confirm availability and send me the booking details."
               label="Start Booking Now"
               size="lg"

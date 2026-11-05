@@ -26,12 +26,12 @@ export default function HeroSection() {
       {/* Dark Overlay — horizontal gradient anchors the text side, vertical
           layer adds a baseline darkening so white text stays legible over
           any bright spot in the image */}
-      <div className="absolute inset-0 bg-gradient-to-r from-charcoal/95 via-charcoal/80 to-charcoal/50" />
-      <div className="absolute inset-0 bg-gradient-to-r from-charcoal/70 via-charcoal/20 to-charcoal/30" />
+      <div className="absolute inset-0 bg-linear-to-r from-charcoal/95 via-charcoal/80 to-charcoal/50" />
+      <div className="absolute inset-0 bg-linear-to-r from-charcoal/70 via-charcoal/20 to-charcoal/30" />
 
       {/* Content */}
       <div className="relative z-10 w-full px-6 sm:px-10 lg:px-20 py-24">
-        <div className="max-w-2xl">
+        <div className="max-w-2xl hero-enter">
           {/* Eyebrow */}
           <div className="flex items-center gap-2 mb-6">
             <div className="w-8 h-0.5 bg-gold" />
@@ -59,8 +59,8 @@ export default function HeroSection() {
             <span className="font-display text-gold text-4xl md:text-5xl font-bold">
               ₦55,000
             </span>
-            <span className="text-white/50 text-lg font-sans">/night</span>
-            <span className="text-white/40 text-sm ml-2">— starting price</span>
+            <span className="text-white/75 text-lg font-sans">/night</span>
+            <span className="text-white/75 text-sm ml-2">— starting price</span>
           </div>
 
           {/* CTA Buttons */}
@@ -75,7 +75,6 @@ export default function HeroSection() {
               </Button>
             </Link>
             <WhatsAppButton
-              phone="2348098765432"
               message="Hello Haven Shortlets, I would like to book an apartment. Please confirm availability."
               label="Book on WhatsApp"
               size="lg"
@@ -100,8 +99,6 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Bottom Fade */}
-      {/* <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-ivory to-transparent" /> */}
     </section>
   );
 }

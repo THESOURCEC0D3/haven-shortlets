@@ -41,6 +41,27 @@ export const siteConfig = {
   whatsapp: "2348098765432",
   email: "bookings@havenshortlets.com",
 
+  // The named human guests deal with. Referenced by the contact page, the
+  // host profile, guide bylines, and the WhatsApp copy — one place, so the
+  // person's name can never disagree with itself across the site.
+  host: {
+    name: "Chidi Okonkwo",
+    firstName: "Chidi",
+    role: "Founder & Host",
+    languages: "English, Igbo, Pidgin",
+  },
+
+  // Response-time commitment. Quoted in visible copy AND in the WhatsApp
+  // reassurance line, so it must come from one constant.
+  responseTimeMinutes: 30,
+
+  // Business hours — rendered on the contact page and emitted as
+  // openingHoursSpecification in LocalBusiness schema.
+  openingHours: [
+    { days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], opens: "07:00", closes: "22:00" },
+    { days: ["Sunday"], opens: "09:00", closes: "18:00" },
+  ],
+
   // Price band shown to engines/LLMs as the LocalBusiness priceRange.
   priceRange: "₦55,000–₦150,000 / night",
 
@@ -48,6 +69,49 @@ export const siteConfig = {
   // Add real profiles as they go live.
   sameAs: [] as string[],
 } as const;
+
+/**
+ * Build a wa.me deep link with a pre-filled message.
+ *
+ * Why this is a function and not a string the caller assembles: the phone
+ * number was previously hardcoded at 19 call sites across 11 files, alongside a
+ * comment in this file asking developers to keep them in sync by hand. A phone
+ * number that lives in 19 places is a phone number that will eventually
+ * disagree with itself — and NAP (Name/Address/Phone) consistency is one of the
+ * strongest local-SEO signals there is. One function, one source of truth.
+ *
+ * Pre-filling the message matters commercially: a blank WhatsApp thread makes
+ * the guest compose the first message, and many simply don't. A message that
+ * already names the apartment converts a "hello?" into a qualified enquiry.
+ */
+export function whatsappUrl(message: string, phone: string = siteConfig.whatsapp): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
+/** `tel:` href built from the E.164 number, so dialling always uses one value. */
+export const telHref = `tel:${siteConfig.phoneE164}`;
+
+/** `mailto:` href, same reasoning. */
+export const mailHref = `mailto:${siteConfig.email}`;
+
+/** Single-line NAP string for the footer / contact page / schema. */
+export const fullAddress = `${siteConfig.address.street}, ${siteConfig.address.locality}, ${siteConfig.address.region}`;
+
+/**
+ * Google Maps deep links. We deliberately use the public search/directions URL
+ * form rather than an embedded iframe: an embed costs an API key, adds a
+ * third-party script to every listing page, and would be blocked by a strict
+ * CSP. A static map image plus a "Get directions" link answers the guest's
+ * actual question ("how far is this from where I need to be?") at zero
+ * performance cost.
+ */
+export function mapsSearchUrl(query: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function mapsDirectionsUrl(destination: string): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+}
 
 /**
  * Turn a root-relative path ("/apartments") into an absolute URL. Metadata,

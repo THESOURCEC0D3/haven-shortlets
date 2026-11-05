@@ -6,7 +6,7 @@ import WhatsAppButton from "@/components/shared/WhatsAppButton";
 export default function AboutCTA() {
   return (
     <section className="py-20 bg-charcoal text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="flex items-center justify-center gap-2 mb-6">
           <div className="w-8 h-0.5 bg-gold" />
           <span className="text-gold text-sm font-medium tracking-widest uppercase">
@@ -20,7 +20,7 @@ export default function AboutCTA() {
           <span className="italic text-gold">The Right Way.</span>
         </h2>
 
-        <p className="text-white/60 text-lg max-w-xl mx-auto mb-10">
+        <p className="text-white/80 text-lg max-w-xl mx-auto mb-10">
           Browse our verified apartments and book direct. No platform fees, no
           surprises, no disappointments.
         </p>
@@ -36,7 +36,6 @@ export default function AboutCTA() {
             </Button>
           </Link>
           <WhatsAppButton
-            phone="2348098765432"
             message="Hello Haven Shortlets, I would like to book an apartment. Please help me find the right one."
             label="Talk to Chidi"
             size="lg"

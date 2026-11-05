@@ -1,35 +1,70 @@
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import WhatsAppButton from "@/components/shared/WhatsAppButton";
+import {
+  siteConfig,
+  telHref,
+  mailHref,
+  fullAddress,
+  whatsappUrl,
+  mapsSearchUrl,
+} from "@/lib/site";
+
+/**
+ * Every value derives from siteConfig.
+ *
+ * This block is the canonical NAP (Name / Address / Phone) display, and it must
+ * match the LocalBusiness JSON-LD byte for byte — search engines treat a
+ * mismatch between the visible contact details and the structured data as two
+ * different businesses, which splits and dilutes local ranking signals.
+ *
+ * The opening hours are now formatted FROM siteConfig.openingHours, the same
+ * array that feeds openingHoursSpecification in the schema. Previously the
+ * visible text said "Mon — Sat: 7am — 10pm" while the schema said nothing at
+ * all; now they cannot disagree.
+ */
+function formatHours(): string {
+  return siteConfig.openingHours
+    .map((slot) => {
+      const days =
+        slot.days.length > 1
+          ? `${slot.days[0].slice(0, 3)} — ${slot.days[slot.days.length - 1].slice(0, 3)}`
+          : slot.days[0];
+      return `${days}: ${slot.opens} — ${slot.closes}`;
+    })
+    .join("\n");
+}
 
 const contactDetails = [
   {
     icon: MapPin,
-    label: "Office Address",
-    value: "12 Rumuola Road, GRA Phase 1, Port Harcourt, Rivers State",
-    href: null,
+    label: "Office address",
+    value: fullAddress,
+    href: mapsSearchUrl(`${fullAddress}, Nigeria`),
   },
   {
     icon: Phone,
     label: "Phone",
-    value: "0809 876 5432",
-    href: "tel:+2348098765432",
+    value: siteConfig.phoneDisplay,
+    href: telHref,
   },
   {
     icon: MessageCircle,
     label: "WhatsApp",
-    value: "0809 876 5432",
-    href: "https://wa.me/2348098765432",
+    value: siteConfig.phoneDisplay,
+    href: whatsappUrl(
+      "Hello Haven Shortlets, I would like to enquire about booking an apartment.",
+    ),
   },
   {
     icon: Mail,
     label: "Email",
-    value: "bookings@havenshortlets.com",
-    href: "mailto:bookings@havenshortlets.com",
+    value: siteConfig.email,
+    href: mailHref,
   },
   {
     icon: Clock,
-    label: "Response Hours",
-    value: "Mon — Sat: 7am — 10pm\nSunday: 9am — 6pm",
+    label: "Response hours",
+    value: formatHours(),
     href: null,
   },
 ];
@@ -47,10 +82,10 @@ export default function ContactInfo() {
           {contactDetails.map((detail) => (
             <div key={detail.label} className="flex items-start gap-3">
               <div className="bg-gold/10 p-2 rounded-lg shrink-0">
-                <detail.icon className="w-4 h-4 text-gold" />
+                <detail.icon className="w-4 h-4 text-gold-text" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-0.5">
+                <p className="text-xs text-slate-600 uppercase tracking-wider font-medium mb-0.5">
                   {detail.label}
                 </p>
                 {detail.href ? (
@@ -64,7 +99,7 @@ export default function ContactInfo() {
                         ? "noopener noreferrer"
                         : undefined
                     }
-                    className="text-sm text-slate-700 hover:text-gold transition-colors"
+                    className="text-sm text-slate-700 hover:text-gold-text transition-colors"
                   >
                     {detail.value}
                   </a>
@@ -79,7 +114,6 @@ export default function ContactInfo() {
         </div>
         <div className="mt-6 pt-6 border-t border-slate-100">
           <WhatsAppButton
-            phone="2348098765432"
             message="Hello Haven Shortlets, I would like to enquire about booking an apartment."
             label="WhatsApp Us Now"
             className="w-full"
@@ -92,7 +126,7 @@ export default function ContactInfo() {
         <h3 className="font-display text-lg font-bold text-white mb-2">
           Our Response Promise
         </h3>
-        <p className="text-white/50 text-sm leading-relaxed mb-4">
+        <p className="text-white/75 text-sm leading-relaxed mb-4">
           We take response time seriously. Here is what to expect.
         </p>
         <div className="flex flex-col gap-2">

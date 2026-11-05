@@ -1,29 +1,62 @@
-import { BadgePercent, MessageCircle, CheckCircle, Clock } from "lucide-react";
+import Link from "next/link";
+import {
+  BadgePercent,
+  MessageCircle,
+  CheckCircle,
+  Clock,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  formatPrice,
+  getApartmentBySlug,
+  airbnbEquivalent,
+  AIRBNB_FEE_MULTIPLIER,
+} from "@/lib/data/apartments";
 
-const savings = [
-  {
-    nights: 1,
-    direct: 150000,
-    airbnb: 178500,
-  },
-  {
-    nights: 3,
-    direct: 450000,
-    airbnb: 535500,
-  },
-  {
-    nights: 7,
-    direct: 900000,
-    airbnb: 1071000,
-  },
-];
+/**
+ * The savings table, DERIVED rather than hardcoded.
+ *
+ * These figures were previously three hardcoded pairs (150000/178500 etc.), and
+ * `formatPrice` was reimplemented at the bottom of this file — a second copy of
+ * the one in lib/data/apartments.ts.
+ *
+ * Both are the same class of problem: a FACT stored in two places. The nightly
+ * rate lives in lib/data/apartments.ts, and the Airbnb multiplier now lives
+ * beside it as AIRBNB_FEE_MULTIPLIER. If the Executive Suite's price ever
+ * changes, this table used to keep quoting the old one — so the homepage would
+ * contradict the listing page about the site's central claim. A savings argument
+ * that disagrees with itself across two pages is worse than no argument.
+ *
+ * Now the numbers, the listing cards, and the sidebar comparison all come from
+ * one rate and one multiplier.
+ */
+const FLAGSHIP = getApartmentBySlug("executive-suite-gra")!;
+
+const savings = [1, 3, 7].map((nights) => {
+  const direct =
+    nights === 7 ? FLAGSHIP.pricePerWeek : FLAGSHIP.pricePerNight * nights;
+  return {
+    nights,
+    direct,
+    airbnb: airbnbEquivalent(FLAGSHIP.pricePerNight) * nights,
+  };
+});
+
+const weeklySaving =
+  airbnbEquivalent(FLAGSHIP.pricePerNight) * 7 - FLAGSHIP.pricePerWeek;
+
+const FEE_PERCENT = Math.round((AIRBNB_FEE_MULTIPLIER - 1) * 100);
 
 const reasons = [
   {
     icon: BadgePercent,
     title: "No Platform Commission",
     description:
-      "Airbnb charges guests a service fee of 14–16% on every booking. When you book direct, that money stays in your pocket — not a San Francisco tech company's.",
+      // Tone fix: the original ended "— not a San Francisco tech company's."
+      // It was the only sneering line on an otherwise composed site, and the
+      // buyer here is a senior professional who wants a straight answer, not a
+      // villain. The argument is stronger without the sneer.
+      "Airbnb charges guests a service fee of 14–16% on every booking. Book direct and that money stays with you instead.",
   },
   {
     icon: MessageCircle,
@@ -45,29 +78,20 @@ const reasons = [
   },
 ];
 
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
-};
-
 export default function WhyBookDirect() {
   return (
     <section className="py-20 bg-ivory">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="max-w-2xl mb-16">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-0.5 bg-gold" />
-            <span className="text-gold text-sm font-medium tracking-widest uppercase">
+            <span className="text-gold-text text-sm font-medium tracking-widest uppercase">
               Why Book Direct
             </span>
           </div>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-charcoal leading-tight mb-4">
-            Keep the Money <span className="italic text-gold">Airbnb</span>{" "}
+            Keep the Money <span className="italic text-gold-text">Airbnb</span>{" "}
             Would Have Charged You
           </h2>
           <p className="text-slate-600 text-lg leading-relaxed">
@@ -84,7 +108,7 @@ export default function WhyBookDirect() {
             {/* Table Header */}
             <div className="grid grid-cols-3 bg-charcoal text-white">
               <div className="p-4">
-                <p className="text-xs text-white/50 uppercase tracking-wider">
+                <p className="text-xs text-white/75 uppercase tracking-wider">
                   Stay Length
                 </p>
               </div>
@@ -94,7 +118,7 @@ export default function WhyBookDirect() {
                 </p>
               </div>
               <div className="p-4 text-center border-l border-white/10">
-                <p className="text-xs text-white/50 uppercase tracking-wider">
+                <p className="text-xs text-white/75 uppercase tracking-wider">
                   Via Airbnb
                 </p>
               </div>
@@ -114,7 +138,7 @@ export default function WhyBookDirect() {
                     <p className="font-semibold text-slate-900">
                       {row.nights === 1 ? "1 Night" : `${row.nights} Nights`}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       Executive Suite
                     </p>
                   </div>
@@ -122,15 +146,15 @@ export default function WhyBookDirect() {
                     <p className="font-bold text-charcoal">
                       {formatPrice(row.direct)}
                     </p>
-                    <p className="text-xs text-green-600 font-medium mt-0.5">
+                    <p className="text-xs text-green-700 font-medium mt-0.5">
                       Save {formatPrice(saving)}
                     </p>
                   </div>
                   <div className="p-5 text-center border-l border-slate-100">
-                    <p className="font-medium text-slate-400 line-through">
+                    <p className="font-medium text-slate-600 line-through">
                       {formatPrice(row.airbnb)}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-600 mt-0.5">
                       +
                       {Math.round(
                         ((row.airbnb - row.direct) / row.direct) * 100,
@@ -144,9 +168,9 @@ export default function WhyBookDirect() {
 
             {/* Footer */}
             <div className="p-5 bg-charcoal/5 border-t border-slate-200">
-              <p className="text-xs text-slate-500 text-center">
-                Airbnb service fees estimated at 19% of base rate. Actual fees
-                may vary.
+              <p className="text-xs text-slate-600 text-center">
+                Airbnb service fees estimated at {FEE_PERCENT}% of the base rate.
+                Actual platform fees vary.
               </p>
             </div>
           </div>
@@ -154,50 +178,80 @@ export default function WhyBookDirect() {
           {/* Big Savings Callout */}
           <div className="flex flex-col gap-6">
             <div className="bg-charcoal rounded-2xl p-8 text-white">
-              <p className="text-white/60 text-sm uppercase tracking-wider mb-2">
+              <p className="text-white/80 text-sm uppercase tracking-wider mb-2">
                 On a 7-night stay you save
               </p>
               <p className="font-display text-6xl font-bold text-gold mb-2">
-                ₦171,000
+                {formatPrice(weeklySaving)}
               </p>
-              <p className="text-white/60 text-sm leading-relaxed">
+              <p className="text-white/80 text-sm leading-relaxed">
                 That is the cost of a flight, a nice dinner for two, or two
                 extra nights in the apartment — money that goes to Airbnb when
                 you book through their platform.
               </p>
             </div>
 
+            {/* This slot used to hold a four-step "How it works" list that was
+                a VERBATIM DUPLICATE of the HowItWorks section further down the
+                same page — the homepage explained the booking process twice,
+                about 40% of the page apart. A reader who scrolls learns nothing
+                the second time, and repetition reads as padding on a site whose
+                whole pitch is honesty.
+
+                What replaces it closes a real gap the duplicate was hiding:
+                nothing on the site explained what protects a guest between
+                sending money and getting the keys. For someone transferring
+                ₦900,000 to a stranger in another country, that is THE question,
+                and it was unanswered. */}
             <div className="bg-white rounded-2xl p-6 border border-slate-200">
-              <p className="font-semibold text-slate-900 mb-4">How it works</p>
-              <div className="flex flex-col gap-4">
+              <p className="font-semibold text-slate-900 mb-1">
+                What protects you before you pay
+              </p>
+              <p className="text-sm text-slate-600 mb-5 leading-relaxed">
+                Booking direct means you deal with a named person, not a support
+                queue. Here is what that gets you.
+              </p>
+              <ul className="flex flex-col gap-4">
                 {[
                   {
-                    step: "01",
-                    text: "Browse our apartments and pick the one you want",
+                    title: "Written confirmation before any money moves",
+                    text: "Apartment, exact dates, total, and cancellation terms in writing — before you transfer anything.",
                   },
                   {
-                    step: "02",
-                    text: "WhatsApp us your dates and we confirm availability instantly",
+                    title: "50% deposit, not the full amount",
+                    text: "You pay half to hold it and the balance on or before check-in. You are never fully exposed up front.",
                   },
                   {
-                    step: "03",
-                    text: "Pay via transfer or Paystack and receive your booking confirmation",
+                    title: "Free cancellation up to 7 days out",
+                    text: "Plans change. Cancel a week ahead and you get everything back, no questions.",
                   },
                   {
-                    step: "04",
-                    text: "Check in on your arrival date — keys, codes, and contacts ready",
+                    title: "Full refund if it is not as described",
+                    text: "Tell us within 2 hours of check-in and you get your money back plus help finding somewhere else that day.",
                   },
                 ].map((item) => (
-                  <div key={item.step} className="flex items-start gap-4">
-                    <span className="font-display text-gold font-bold text-lg shrink-0 w-8">
-                      {item.step}
-                    </span>
-                    <p className="text-slate-600 text-sm leading-relaxed">
-                      {item.text}
-                    </p>
-                  </div>
+                  <li key={item.title} className="flex items-start gap-3">
+                    <ShieldCheck
+                      className="size-4 text-gold-text shrink-0 mt-0.5"
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-charcoal">
+                        {item.title}
+                      </p>
+                      <p className="text-sm text-slate-600 leading-relaxed mt-0.5">
+                        {item.text}
+                      </p>
+                    </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
+              <Link
+                href="/policies"
+                className="mt-5 inline-block text-sm font-medium text-charcoal underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-text transition-colors"
+              >
+                Read the full booking terms
+              </Link>
             </div>
           </div>
         </div>
@@ -210,7 +264,7 @@ export default function WhyBookDirect() {
               className="bg-white rounded-xl p-6 border border-slate-200 hover:border-gold/50 hover:shadow-md transition-all duration-300"
             >
               <div className="bg-gold/10 p-3 rounded-lg w-fit mb-4">
-                <reason.icon className="w-5 h-5 text-gold" />
+                <reason.icon className="w-5 h-5 text-gold-text" />
               </div>
               <h3 className="font-semibold text-charcoal mb-2">
                 {reason.title}

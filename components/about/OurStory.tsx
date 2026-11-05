@@ -28,19 +28,19 @@ const milestones = [
 export default function OurStory() {
   return (
     <section className="py-20 bg-ivory">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Story Text */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-0.5 bg-gold" />
-              <span className="text-gold text-sm font-medium tracking-widest uppercase">
+              <span className="text-gold-text text-sm font-medium tracking-widest uppercase">
                 Our Story
               </span>
             </div>
             <h2 className="font-display text-4xl font-bold text-charcoal leading-tight mb-6">
               Built Out of{" "}
-              <span className="italic text-gold">Frustration.</span> Run With
+              <span className="italic text-gold-text">Frustration.</span> Run With
               Pride.
             </h2>
             <div className="flex flex-col gap-4 text-slate-600 leading-relaxed">
@@ -73,7 +73,7 @@ export default function OurStory() {
           <div>
             <div className="flex items-center gap-2 mb-8">
               <div className="w-8 h-0.5 bg-gold" />
-              <span className="text-gold text-sm font-medium tracking-widest uppercase">
+              <span className="text-gold-text text-sm font-medium tracking-widest uppercase">
                 Our Journey
               </span>
             </div>
@@ -91,7 +91,7 @@ export default function OurStory() {
                     )}
                   </div>
                   <div className="pb-8">
-                    <p className="text-xs text-slate-400 mb-0.5">
+                    <p className="text-xs text-slate-600 mb-0.5">
                       {milestone.year}
                     </p>
                     <h3 className="font-semibold text-charcoal mb-1">

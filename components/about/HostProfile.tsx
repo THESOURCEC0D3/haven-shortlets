@@ -4,18 +4,18 @@ import WhatsAppButton from "@/components/shared/WhatsAppButton";
 export default function HostProfile() {
   return (
     <section className="py-20 bg-ivory">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-8 h-0.5 bg-gold" />
-            <span className="text-gold text-sm font-medium tracking-widest uppercase">
+            <span className="text-gold-text text-sm font-medium tracking-widest uppercase">
               Your Host
             </span>
             <div className="w-8 h-0.5 bg-gold" />
           </div>
           <h2 className="font-display text-4xl font-bold text-charcoal leading-tight mb-4">
             A Real Person.{" "}
-            <span className="italic text-gold">Not an Inbox.</span>
+            <span className="italic text-gold-text">Not an Inbox.</span>
           </h2>
           <p className="text-slate-600 leading-relaxed">
             Every guest at Haven Shortlets has direct access to the host — not a
@@ -39,7 +39,7 @@ export default function HostProfile() {
                 <p className="text-gold text-sm font-medium mb-2">
                   Founder & Host — Haven Shortlets PH
                 </p>
-                <p className="text-white/50 text-sm leading-relaxed">
+                <p className="text-white/75 text-sm leading-relaxed">
                   Port Harcourt native. Former oil services engineer. Full-time
                   host since 2019.
                 </p>
@@ -81,10 +81,10 @@ export default function HostProfile() {
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-3">
                     <div className="bg-gold/10 p-2 rounded-lg shrink-0">
-                      <item.icon className="w-4 h-4 text-gold" />
+                      <item.icon className="w-4 h-4 text-gold-text" />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-400 mb-0.5">
+                      <p className="text-xs text-slate-600 mb-0.5">
                         {item.label}
                       </p>
                       <p className="text-sm text-slate-700 font-medium">
@@ -96,7 +96,6 @@ export default function HostProfile() {
               </div>
 
               <WhatsAppButton
-                phone="2348098765432"
                 message="Hello Chidi, I found your profile on Haven Shortlets and I would like to enquire about booking an apartment."
                 label="WhatsApp Chidi Directly"
                 className="w-full sm:w-auto"
