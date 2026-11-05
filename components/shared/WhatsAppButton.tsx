@@ -12,7 +12,9 @@ interface WhatsAppButtonProps {
    * about what the guest is actually asking at that point in the funnel.
    */
   message: string;
-  label?: string;
+  /** A ReactNode, not just a string, so a caller can swap the wording by
+   * breakpoint (see StickyBookingBar). */
+  label?: React.ReactNode;
   size?: "default" | "sm" | "lg";
   /** Override only for a non-default number (e.g. a second host line). */
   phone?: string;

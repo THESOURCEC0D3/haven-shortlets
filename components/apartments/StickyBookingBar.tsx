@@ -39,7 +39,20 @@ export default function StickyBookingBar({
   status: AvailabilityStatus;
   whatsappMessage: string;
 }) {
-  const label = bookingLabel(status.state);
+  // Both labels are rendered; CSS shows one. Under 400px the full label plus
+  // the price and call button overflow a single row, so the short one shows.
+  // `hidden` is display:none, which screen readers also skip — so only the
+  // visible label is ever announced, never both.
+  const label = (
+    <>
+      <span className="min-[400px]:hidden">
+        {bookingLabel(status.state, { short: true })}
+      </span>
+      <span className="hidden min-[400px]:inline">
+        {bookingLabel(status.state)}
+      </span>
+    </>
+  );
 
   return (
     <>
@@ -50,12 +63,15 @@ export default function StickyBookingBar({
 
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 md:hidden [padding-bottom:calc(0.75rem+env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-3">
-          <div className="min-w-0">
-            <p className="font-display text-lg font-bold text-charcoal leading-none">
+          {/* shrink-0 + whitespace-nowrap: the price never gives up width.
+              It used to be min-w-0, which let the box shrink narrower than its
+              own text — the text then spilled out underneath the call button. */}
+          <div className="shrink-0">
+            <p className="font-display text-lg font-bold text-charcoal leading-none whitespace-nowrap">
               {formatPrice(pricePerNight)}
               <span className="text-xs font-normal text-slate-600">/night</span>
             </p>
-            <p className="text-xs text-green-700 font-medium mt-0.5">
+            <p className="text-xs text-green-700 font-medium mt-0.5 whitespace-nowrap">
               No platform fees
             </p>
           </div>
