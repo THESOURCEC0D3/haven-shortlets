@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MapPin, Bed, Bath, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WhatsAppButton from "@/components/shared/WhatsAppButton";
+import { bookingLabel } from "@/lib/booking-label";
 import AvailabilityBadge from "@/components/apartments/AvailabilityBadge";
 import {
   type Apartment,
@@ -149,22 +150,26 @@ export default function ApartmentCard({
         {/* Actions. Both use the default 44px button height — these are the two
             primary conversion controls on a touch device and were previously
             28px tall (`size="sm"`), well under the 44px both Apple and Google
-            publish as the minimum comfortable target. */}
-        <div className="flex gap-2 pt-3 border-t border-slate-100">
-          <Button asChild variant="onLight" className="flex-1">
+            publish as the minimum comfortable target.
+
+            Stacked, not side by side: at half width the booking button could
+            not fit "Book on WhatsApp" plus its icon. Full width also gives the
+            booking action the top spot, which matches its importance. */}
+        <div className="flex flex-col gap-2 pt-3 border-t border-slate-100">
+          <WhatsAppButton
+            message={whatsappMessage}
+            // Label comes from the shared rule in lib/booking-label.ts so the
+            // card, detail sidebar and mobile bar always agree.
+            label={bookingLabel(status.state)}
+            muted={isBooked}
+            className="w-full"
+          />
+          <Button asChild variant="onLight" className="w-full">
             <Link href={`/apartments/${apartment.slug}`}>
               View details
               <span className="sr-only"> for {apartment.name}</span>
             </Link>
           </Button>
-          <WhatsAppButton
-            message={whatsappMessage}
-            // "Book Now" over-promised: this opens a chat, it does not book
-            // anything. An accurate label sets an expectation the next screen
-            // can meet, which is what stops the funnel leaking at the handoff.
-            label={isBooked ? "Ask us" : "Check dates"}
-            className="flex-1"
-          />
         </div>
       </div>
     </div>

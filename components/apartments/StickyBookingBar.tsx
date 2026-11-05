@@ -1,5 +1,6 @@
 import { Phone } from "lucide-react";
 import WhatsAppButton from "@/components/shared/WhatsAppButton";
+import { bookingLabel } from "@/lib/booking-label";
 import { formatPrice } from "@/lib/data/apartments";
 import { telHref } from "@/lib/site";
 import type { AvailabilityStatus } from "@/lib/types";
@@ -38,8 +39,7 @@ export default function StickyBookingBar({
   status: AvailabilityStatus;
   whatsappMessage: string;
 }) {
-  const label =
-    status.state === "booked" ? "Ask about dates" : "Check availability";
+  const label = bookingLabel(status.state);
 
   return (
     <>
@@ -68,7 +68,11 @@ export default function StickyBookingBar({
             >
               <Phone className="size-4" aria-hidden="true" />
             </a>
-            <WhatsAppButton message={whatsappMessage} label={label} />
+            <WhatsAppButton
+              message={whatsappMessage}
+              label={label}
+              muted={status.state === "booked"}
+            />
           </div>
         </div>
       </div>

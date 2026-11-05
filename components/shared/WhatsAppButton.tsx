@@ -16,6 +16,8 @@ interface WhatsAppButtonProps {
   size?: "default" | "sm" | "lg";
   /** Override only for a non-default number (e.g. a second host line). */
   phone?: string;
+  /** Grey, de-emphasised styling — still clickable. Used for booked units. */
+  muted?: boolean;
   className?: string;
 }
 
@@ -42,10 +44,16 @@ export default function WhatsAppButton({
   label = "WhatsApp Us",
   size = "default",
   phone = siteConfig.whatsapp,
+  muted = false,
   className,
 }: WhatsAppButtonProps) {
   return (
-    <Button asChild variant="whatsapp" size={size} className={cn(className)}>
+    <Button
+      asChild
+      variant={muted ? "muted" : "whatsapp"}
+      size={size}
+      className={cn(className)}
+    >
       <a
         href={whatsappUrl(message, phone)}
         target="_blank"

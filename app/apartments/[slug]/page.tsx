@@ -43,6 +43,7 @@ import {
   faqSchema,
 } from "@/lib/seo/structured-data";
 import { getAvailabilityStatuses } from "@/lib/availability";
+import { bookingLabel } from "@/lib/booking-label";
 import { siteConfig, telHref } from "@/lib/site";
 
 interface ApartmentPageProps {
@@ -351,9 +352,21 @@ export default async function ApartmentPage({ params }: ApartmentPageProps) {
             <SimilarApartments current={apartment} statuses={statuses} />
           </div>
 
-          {/* Right Column — Sidebar (desktop only; mobile uses the sticky bar) */}
-          <div className="hidden lg:flex flex-col gap-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-24">
+          {/* Right Column — Sidebar (desktop only; mobile uses the sticky bar).
+              The WHOLE column is sticky, not just the price card. When only the
+              price card stuck, the Haven Promise card below scrolled up into the
+              same spot and slid underneath it (a sticky element is positioned,
+              so it paints above normal-flow siblings).
+              - self-start: grid items stretch to the row's full height by
+                default, and a sticky element as tall as its container has no
+                room to stick.
+              - max-h + overflow-y-auto: on short laptop screens the column is
+                taller than the viewport; without a cap its bottom (including
+                the booking buttons) would be cut off. 6rem = top-24 offset,
+                1.5rem = breathing room at the bottom. dvh, not vh, so mobile
+                browser chrome is accounted for if this ever shows on tablets. */}
+          <div className="hidden lg:flex flex-col gap-6 sticky top-24 self-start max-h-[calc(100dvh-7.5rem)] overflow-y-auto [scrollbar-width:thin]">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
               <div className="mb-5 pb-5 border-b border-slate-100">
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="font-display text-4xl font-bold text-charcoal">
@@ -410,11 +423,8 @@ export default async function ApartmentPage({ params }: ApartmentPageProps) {
               <div className="flex flex-col gap-3">
                 <WhatsAppButton
                   message={bookingMessage}
-                  label={
-                    status.state === "booked"
-                      ? "Ask about dates"
-                      : "Check availability"
-                  }
+                  label={bookingLabel(status.state)}
+                  muted={status.state === "booked"}
                   size="lg"
                   className="w-full"
                 />

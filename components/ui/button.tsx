@@ -40,6 +40,12 @@ const buttonVariants = cva(
         // `onLight` — outline button on white/ivory.
         onLight:
           "border-charcoal text-charcoal hover:bg-charcoal hover:text-white",
+        // `muted` — a still-clickable action we want to de-emphasise (e.g.
+        // "Ask about dates" on a booked apartment). Looks greyed out without
+        // being `disabled`: a disabled button ends the conversation, this one
+        // keeps the lead. slate-700 on slate-200 is ~8:1, so it stays legible.
+        muted:
+          "bg-slate-200 text-slate-700 hover:bg-slate-300 focus-visible:ring-slate-400/50",
       },
       size: {
         // TOUCH-TARGET SCALE (re-tuned from the shadcn "radix-nova" default).
